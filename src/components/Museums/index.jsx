@@ -7,7 +7,9 @@ const Museums = ({ baseUrl }) => {
   const [newMuseumLabel, setNewMuseumLabel] = useState('');
 
   useEffect(() => {
-    fetchMuseums();
+    if (baseUrl && baseUrl.trim() !== '') {
+      fetchMuseums();
+    }
   }, [baseUrl]);
 
   const fetchMuseums = async () => {
