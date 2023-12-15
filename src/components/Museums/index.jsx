@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { v4 as uuidv4 } from "uuid";
+import { v4 as uuidv4 } from 'uuid';
 
 const Museums = ({ baseUrl }) => {
   const title = 'Museums';
   const [museums, setMuseums] = useState([]);
   const [newMuseumLabel, setNewMuseumLabel] = useState('');
+  const [searchedMuseum, setSearchedMuseum] = useState(null);
+  const [searchedMuseumId, setSearchedMuseumId] = useState('');
 
   useEffect(() => {
     if (baseUrl && baseUrl.trim() !== '') {
@@ -36,10 +38,10 @@ const Museums = ({ baseUrl }) => {
       const body = {
         title: newMuseumLabel,
         idMuseum: uuidv4(),
-        planURL: "",
-        imageURL: "",
+        planURL: '',
+        imageURL: '',
       };
-  
+
       const response = await fetch(`${baseUrl}/floor`, {
         method: 'POST',
         headers: {
@@ -47,11 +49,11 @@ const Museums = ({ baseUrl }) => {
         },
         body: JSON.stringify(body),
       });
-  
+
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
-  
+
       const newMuseum = await response.json();
       setMuseums((prevMuseums) => [...prevMuseums, newMuseum]);
       setNewMuseumLabel('');
@@ -64,18 +66,26 @@ const Museums = ({ baseUrl }) => {
   const editMuseum = async (id) => {
     try {
       const museumToEdit = museums.find((museum) => museum.id === id);
-      const newLabel = prompt('Enter the new label:', museumToEdit.label);
 
-      if (newLabel === null) {
+      const newTitle = prompt('Enter the new title:', museumToEdit.title);
+      const newPlanURL = prompt('Enter the new plan URL:', museumToEdit.planURL);
+      const newImageURL = prompt('Enter the new image URL:', museumToEdit.imageURL);
+
+      if (newTitle === null || newPlanURL === null || newImageURL === null) {
         return;
       }
 
       const response = await fetch(`${baseUrl}/floor/${id}`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/ld+json',
         },
-        body: JSON.stringify({ label: newLabel }),
+        body: JSON.stringify({
+          idMuseum: museumToEdit.idMuseum,
+          title: newTitle,
+          planURL: newPlanURL,
+          imageURL: newImageURL,
+        }),
       });
 
       if (!response.ok) {
@@ -92,7 +102,7 @@ const Museums = ({ baseUrl }) => {
       console.error('Error editing museum:', error);
     }
   };
-  
+
   const deleteMuseum = async (id) => {
     try {
       const response = await fetch(`${baseUrl}/floor/${id}`, {
@@ -111,6 +121,20 @@ const Museums = ({ baseUrl }) => {
     }
   };
 
+  const searchMuseumById = async () => {
+    try {
+      const response = await fetch(`${baseUrl}/floors/${searchedMuseumId}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const museum = await response.json();
+      setSearchedMuseum(museum);
+    } catch (error) {
+      console.error('Error searching museum by ID:', error);
+    }
+  };
+
   return (
     <div>
       <h1>{title}</h1>
@@ -123,14 +147,32 @@ const Museums = ({ baseUrl }) => {
         />
         <button onClick={handleCreateMuseum}>Create New Museum</button>
       </div>
+      <div>
+        <input
+          type="text"
+          placeholder="Search Museum by ID"
+          value={searchedMuseumId}
+          onChange={(e) => setSearchedMuseumId(e.target.value)}
+        />
+        <button onClick={searchMuseumById}>Search</button>
+      </div>
       <div className="museums-container">
-        {museums.map((item, index) => (
-          <div className="museums-items" key={`${item.id}-${index}`}>
-            {item.label}
-            <button onClick={() => editMuseum(item.id)}>Edit</button>
-            <button onClick={() => deleteMuseum(item.id)}>Delete</button>
+        {searchedMuseum ? (
+          <div className="museums-items">
+            <h3>Searched Museum:</h3>
+            <div>{searchedMuseum.title}</div>
+            <div>{searchedMuseum.planURL}</div>
+            <div>{searchedMuseum.imageURL}</div>
           </div>
-        ))}
+        ) : (
+          museums.map((item, index) => (
+            <div className="museums-items" key={`${item.id}-${index}`}>
+              {item.label}
+              <button onClick={() => editMuseum(item.id)}>Edit</button>
+              <button onClick={() => deleteMuseum(item.id)}>Delete</button>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
