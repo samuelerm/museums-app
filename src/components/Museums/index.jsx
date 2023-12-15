@@ -52,9 +52,53 @@ const Museums = ({ baseUrl }) => {
   };
 
   const editMuseum = async (id) => {
+    try {
+      const museumToEdit = museums.find((museum) => museum.id === id);
+      const newLabel = prompt('Enter the new label:', museumToEdit.label);
+
+      if (newLabel === null) {
+        return;
+      }
+
+      const response = await fetch(`${baseUrl}/floor/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ label: newLabel }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const updatedMuseum = await response.json();
+      setMuseums((prevMuseums) =>
+        prevMuseums.map((m) => (m.id === id ? updatedMuseum : m))
+      );
+
+      console.log('Museum edited successfully');
+    } catch (error) {
+      console.error('Error editing museum:', error);
+    }
   };
   
   const deleteMuseum = async (id) => {
+    try {
+      const response = await fetch(`${baseUrl}/floor/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      setMuseums((prevMuseums) => prevMuseums.filter((m) => m.id !== id));
+
+      console.log('Museum deleted successfully');
+    } catch (error) {
+      console.error('Error deleting museum:', error);
+    }
   };
 
   return (
