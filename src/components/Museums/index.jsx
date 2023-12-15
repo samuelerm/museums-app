@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { v4 as uuidv4 } from "uuid";
 
 const Museums = ({ baseUrl }) => {
   const title = 'Museums';
@@ -30,18 +31,25 @@ const Museums = ({ baseUrl }) => {
 
   const handleCreateMuseum = async () => {
     try {
+      const body = {
+        title: newMuseumLabel,
+        idMuseum: uuidv4(),
+        planURL: "",
+        imageURL: "",
+      };
+  
       const response = await fetch(`${baseUrl}/floor`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ label: newMuseumLabel }),
+        body: JSON.stringify(body),
       });
-
+  
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
-
+  
       const newMuseum = await response.json();
       setMuseums((prevMuseums) => [...prevMuseums, newMuseum]);
       setNewMuseumLabel('');
